@@ -16,8 +16,6 @@ st.title("YouTube Viral Topics Tool")
 days = st.number_input("Enter Days to Search (1-30):", min_value=1, max_value=30, value=5)
 min_subs = st.number_input("Min Subscribers:", min_value=0, value=500)
 max_subs = st.number_input("Max Subscribers:", min_value=1, value=5000)
-min_views = st.number_input("Min Views:", min_value=0, value=1000)
-max_views = st.number_input("Max Views:", min_value=1, value=1000000)
 
 # Broader keywords
 keywords = ["Self Improvement", "Tech Reviews", "Stock Market", "Fitness", "AI Tools"]
@@ -68,33 +66,27 @@ if st.button("Fetch Data"):
                 video_url = f"https://www.youtube.com/watch?v={video['id'].get('videoId', '')}"
                 thumbnail_url = video["snippet"].get("thumbnails", {}).get("medium", {}).get("url", "")
                 channel_name = channel["snippet"].get("title", "N/A")
-                views = int(stat["statistics"].get("viewCount", 0))
                 subscribers = int(channel["statistics"].get("subscriberCount", 0))
                 
-                if min_subs <= subscribers <= max_subs and min_views <= views <= max_views:
-                    engagement_rate = views / max(1, subscribers)
+                if min_subs <= subscribers <= max_subs:
                     all_results.append({
                         "Title": title,
                         "Channel": channel_name,
                         "URL": video_url,
-                        "Views": views,
                         "Subscribers": subscribers,
-                        "Engagement Rate": engagement_rate,
                         "Thumbnail": thumbnail_url
                     })
                 else:
-                    st.write(f"Skipping {title} - Views: {views}, Subs: {subscribers}")
+                    st.write(f"Skipping {title} - Subs: {subscribers}")
         
         if all_results:
-            df = pd.DataFrame(all_results).sort_values(by="Engagement Rate", ascending=False)
+            df = pd.DataFrame(all_results)
             st.success(f"Found {len(df)} videos!")
             for _, row in df.iterrows():
                 st.image(row["Thumbnail"], caption=row["Title"], use_column_width=True)
                 st.markdown(f"**[{row['Title']}]({row['URL']})**")
                 st.write(f"**Channel:** {row['Channel']}")
-                st.write(f"**Views:** {row['Views']}")
                 st.write(f"**Subscribers:** {row['Subscribers']}")
-                st.write(f"**Engagement Rate:** {row['Engagement Rate']:.2f}")
                 st.write("---")
             
             # CSV Download
