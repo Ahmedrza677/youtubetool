@@ -22,7 +22,7 @@ min_views = st.number_input("Min Views:", min_value=0, value=1000)
 max_views = st.number_input("Max Views:", min_value=1, value=1000000)
 
 # Broader keywords
-keywords = ["Self Improvement", "Tech Reviews", "Stock Market", "Fitness", "AI Tools"]
+keywords = ["Self Improvement"]
 
 # Fetch Data Button
 if st.button("Fetch Data"):
