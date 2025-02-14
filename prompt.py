@@ -3,7 +3,7 @@ import requests
 from datetime import datetime, timedelta
 
 # YouTube API Key
-API_KEY = "AIzaSyC-Ma1pn-ra7vH9NlwSbs3-A9Iq9DsGoXc"
+API_KEY = "AIzaSyC6McCslf5ndJlf2TrDQMrp2z0QhYCxfno"
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEO_URL = "https://www.googleapis.com/youtube/v3/videos"
 YOUTUBE_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
@@ -15,8 +15,7 @@ st.title("YouTube Viral Topics Tool")
 days = st.number_input("Enter Days to Search (1-30):", min_value=1, max_value=30, value=5)
 
 # List of broader keywords
-keywords = [
- "Football", "CR7", "vs", "Football", "vsFootball", "Ball", "Goal", "Foot", "Messi", "Ronaldo", "Maradona", "Pele", "Haaland", "Mbappe", "Ibrahimovic", "Offside", "Football Cup", "Football Fanny", "Football Meme", "Football Skills", "Cristiano Ronaldo Portugal", "Leo Messi PSG", "Neymar Junior", "Sport Football", "World Cup", "Football vs", "Cristiano Ronaldo Al Nassr", "Al Nassr Ronaldo", "CR7 to Al Nassr", "Football Edits", "World Cup", "vs Football", "Football Comparison"]
+keywords = ["Football"]
 
 # Fetch Data Button
 if st.button("Fetch Data"):
