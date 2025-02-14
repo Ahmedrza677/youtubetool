@@ -1,6 +1,5 @@
 import streamlit as st
 import requests
-import pandas as pd
 from datetime import datetime, timedelta
 
 # YouTube API Key
@@ -15,17 +14,22 @@ st.title("YouTube Viral Topics Tool")
 # Input Fields
 days = st.number_input("Enter Days to Search (1-30):", min_value=1, max_value=30, value=5)
 
-# Broader keywords
-keywords = ["Football", "CR7", "vs", "Football", "vsFootball", "Ball", "Goal", "Foot", "Messi", "Ronaldo", "Maradona", "Pele", "Haaland", "Mbappe", "Ibrahimovic", "Offside", "Football Cup", "Football Fanny", "Football Meme", "Football Skills", "Cristiano Ronaldo Portugal", "Leo Messi PSG", "Neymar Junior", "Sport Football", "World Cup", "Football vs", "Cristiano Ronaldo Al Nassr", "Al Nassr Ronaldo", "CR7 to Al Nassr", "Football Edits", "World Cup", "vs Football", "Football Comparison"]
+# List of broader keywords
+keywords = [
+ "Football", "CR7", "vs", "Football", "vsFootball", "Ball", "Goal", "Foot", "Messi", "Ronaldo", "Maradona", "Pele", "Haaland", "Mbappe", "Ibrahimovic", "Offside", "Football Cup", "Football Fanny", "Football Meme", "Football Skills", "Cristiano Ronaldo Portugal", "Leo Messi PSG", "Neymar Junior", "Sport Football", "World Cup", "Football vs", "Cristiano Ronaldo Al Nassr", "Al Nassr Ronaldo", "CR7 to Al Nassr", "Football Edits", "World Cup", "vs Football", "Football Comparison"]
 
 # Fetch Data Button
 if st.button("Fetch Data"):
     try:
+        # Calculate date range
         start_date = (datetime.utcnow() - timedelta(days=int(days))).isoformat("T") + "Z"
         all_results = []
-        
+
+        # Iterate over the list of keywords
         for keyword in keywords:
             st.write(f"Searching for keyword: {keyword}")
+
+            # Define search parameters
             search_params = {
                 "part": "snippet",
                 "q": keyword,
@@ -35,62 +39,77 @@ if st.button("Fetch Data"):
                 "maxResults": 5,
                 "key": API_KEY,
             }
-            
+
+            # Fetch video data
             response = requests.get(YOUTUBE_SEARCH_URL, params=search_params)
             data = response.json()
-            
-            if "items" not in data:
+
+            # Check if "items" key exists
+            if "items" not in data or not data["items"]:
+                st.warning(f"No videos found for keyword: {keyword}")
                 continue
 
-            video_ids = [video["id"].get("videoId", "") for video in data["items"] if "id" in video]
-            channel_ids = [video["snippet"].get("channelId", "") for video in data["items"] if "snippet" in video]
-            
+            videos = data["items"]
+            video_ids = [video["id"]["videoId"] for video in videos if "id" in video and "videoId" in video["id"]]
+            channel_ids = [video["snippet"]["channelId"] for video in videos if "snippet" in video and "channelId" in video["snippet"]]
+
             if not video_ids or not channel_ids:
+                st.warning(f"Skipping keyword: {keyword} due to missing video/channel data.")
                 continue
-            
+
+            # Fetch video statistics
             stats_params = {"part": "statistics", "id": ",".join(video_ids), "key": API_KEY}
             stats_response = requests.get(YOUTUBE_VIDEO_URL, params=stats_params)
             stats_data = stats_response.json()
-            
-            channel_params = {"part": "statistics,snippet", "id": ",".join(channel_ids), "key": API_KEY}
+
+            if "items" not in stats_data or not stats_data["items"]:
+                st.warning(f"Failed to fetch video statistics for keyword: {keyword}")
+                continue
+
+            # Fetch channel statistics
+            channel_params = {"part": "statistics", "id": ",".join(channel_ids), "key": API_KEY}
             channel_response = requests.get(YOUTUBE_CHANNEL_URL, params=channel_params)
             channel_data = channel_response.json()
-            
-            if "items" not in stats_data or "items" not in channel_data:
+
+            if "items" not in channel_data or not channel_data["items"]:
+                st.warning(f"Failed to fetch channel statistics for keyword: {keyword}")
                 continue
-            
-            for video, stat, channel in zip(data["items"], stats_data["items"], channel_data["items"]):
+
+            stats = stats_data["items"]
+            channels = channel_data["items"]
+
+            # Collect results
+            for video, stat, channel in zip(videos, stats, channels):
                 title = video["snippet"].get("title", "N/A")
-                video_url = f"https://www.youtube.com/watch?v={video['id'].get('videoId', '')}"
-                thumbnail_url = video["snippet"].get("thumbnails", {}).get("medium", {}).get("url", "")
-                channel_name = channel["snippet"].get("title", "N/A")
-                subscribers = int(channel["statistics"].get("subscriberCount", 0))
-                
-                if min_subs <= subscribers <= max_subs:
+                description = video["snippet"].get("description", "")[:200]
+                video_url = f"https://www.youtube.com/watch?v={video['id']['videoId']}"
+                views = int(stat["statistics"].get("viewCount", 0))
+                subs = int(channel["statistics"].get("subscriberCount", 0))
+
+                if subs < 2000:  # Only include channels with fewer than 2,000 subscribers
                     all_results.append({
                         "Title": title,
-                        "Channel": channel_name,
+                        "Description": description,
                         "URL": video_url,
-                        "Subscribers": subscribers,
-                        "Thumbnail": thumbnail_url
+                        "Views": views,
+                        "Subscribers": subs
                     })
-                else:
-                    st.write(f"Skipping {title} - Subs: {subscribers}")
-        
+
+        # Display results
         if all_results:
-            df = pd.DataFrame(all_results)
-            st.success(f"Found {len(df)} videos!")
-            for _, row in df.iterrows():
-                st.image(row["Thumbnail"], caption=row["Title"], use_column_width=True)
-                st.markdown(f"**[{row['Title']}]({row['URL']})**")
-                st.write(f"**Channel:** {row['Channel']}")
-                st.write(f"**Subscribers:** {row['Subscribers']}")
+            st.success(f"Found {len(all_results)} results across all keywords!")
+            for result in all_results:
+                st.markdown(
+                    f"**Title:** {result['Title']}  \n"
+                    f"**Description:** {result['Description']}  \n"
+                    f"**URL:** [Watch Video]({result['URL']})  \n"
+                    f"**Views:** {result['Views']}  \n"
+                    f"**Subscribers:** {result['Subscribers']}"
+                )
                 st.write("---")
-            
-            # CSV Download
-            csv = df.to_csv(index=False).encode("utf-8")
-            st.download_button("Download CSV", csv, "youtube_results.csv", "text/csv")
         else:
-            st.warning("No results match the filters!")
+            st.warning("No results found for channels with fewer than 3,000 subscribers.")
+
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"An error occurred: {e}")
+
