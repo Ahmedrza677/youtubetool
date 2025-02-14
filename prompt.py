@@ -22,7 +22,7 @@ min_views = st.number_input("Min Views:", min_value=0, value=1000)
 max_views = st.number_input("Max Views:", min_value=1, value=1000000)
 
 # Broader keywords
-keywords = ["Self Improvement"]
+keywords = ["Self Improvement", "Tech Reviews", "Stock Market", "Fitness", "AI Tools"]
 
 # Fetch Data Button
 if st.button("Fetch Data"):
@@ -48,8 +48,11 @@ if st.button("Fetch Data"):
             if "items" not in data:
                 continue
 
-            video_ids = [video["id"]["videoId"] for video in data["items"]]
-            channel_ids = [video["snippet"]["channelId"] for video in data["items"]]
+            video_ids = [video["id"].get("videoId", "") for video in data["items"] if "id" in video]
+            channel_ids = [video["snippet"].get("channelId", "") for video in data["items"] if "snippet" in video]
+            
+            if not video_ids or not channel_ids:
+                continue
             
             stats_params = {"part": "statistics", "id": ",".join(video_ids), "key": API_KEY}
             stats_response = requests.get(YOUTUBE_VIDEO_URL, params=stats_params)
@@ -59,11 +62,14 @@ if st.button("Fetch Data"):
             channel_response = requests.get(YOUTUBE_CHANNEL_URL, params=channel_params)
             channel_data = channel_response.json()
             
+            if "items" not in stats_data or "items" not in channel_data:
+                continue
+            
             for video, stat, channel in zip(data["items"], stats_data["items"], channel_data["items"]):
-                title = video["snippet"]["title"]
-                video_url = f"https://www.youtube.com/watch?v={video['id']['videoId']}"
-                thumbnail_url = video["snippet"]["thumbnails"]["medium"]["url"]
-                channel_name = channel["snippet"]["title"]
+                title = video["snippet"].get("title", "N/A")
+                video_url = f"https://www.youtube.com/watch?v={video['id'].get('videoId', '')}"
+                thumbnail_url = video["snippet"].get("thumbnails", {}).get("medium", {}).get("url", "")
+                channel_name = channel["snippet"].get("title", "N/A")
                 views = int(stat["statistics"].get("viewCount", 0))
                 likes = int(stat["statistics"].get("likeCount", 0))
                 comments = int(stat["statistics"].get("commentCount", 0))
@@ -82,6 +88,8 @@ if st.button("Fetch Data"):
                         "Engagement Rate": engagement_rate,
                         "Thumbnail": thumbnail_url
                     })
+                else:
+                    st.write(f"Skipping {title} - Views: {views}, Likes: {likes}, Comments: {comments}, Subs: {subscribers}")
         
         if all_results:
             df = pd.DataFrame(all_results).sort_values(by="Engagement Rate", ascending=False)
