@@ -18,7 +18,7 @@ min_subs = st.number_input("Min Subscribers:", min_value=0, value=500)
 max_subs = st.number_input("Max Subscribers:", min_value=1, value=5000)
 
 # Broader keywords
-keywords = ["Self Improvement", "Tech Reviews", "Stock Market", "Fitness", "AI Tools"]
+keywords = ["Football", "CR7", "vs", "Football", "vsFootball", "Ball", "Goal", "Foot", "Messi", "Ronaldo", "Maradona", "Pele", "Haaland", "Mbappe", "Ibrahimovic", "Offside", "Football Cup", "Football Fanny", "Football Meme", "Football Skills", "Cristiano Ronaldo Portugal", "Leo Messi PSG", "Neymar Junior", "Sport Football", "World Cup", "Football vs", "Cristiano Ronaldo Al Nassr", "Al Nassr Ronaldo", "CR7 to Al Nassr", "Football Edits", "World Cup", "vs Football", "Football Comparison"]
 
 # Fetch Data Button
 if st.button("Fetch Data"):
