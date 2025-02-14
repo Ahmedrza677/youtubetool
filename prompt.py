@@ -16,7 +16,12 @@ days = st.number_input("Enter Days to Search (1-30):", min_value=1, max_value=30
 
 # List of broader keywords
 keywords = [
- "Football", "CR7", "vs", "Football", "vsFootball", "Ball", "Goal", "Foot", "Messi", "Ronaldo", "Maradona", "Pele", "Haaland", "Mbappe", "Ibrahimovic", "Offside", "Football Cup", "Football Fanny", "Football Meme", "Football Skills", "Cristiano Ronaldo Portugal", "Leo Messi PSG", "Neymar Junior", "Sport Football", "World Cup", "Football vs", "Cristiano Ronaldo Al Nassr", "Al Nassr Ronaldo", "CR7 to Al Nassr", "Football Edits", "World Cup", "vs Football", "Football Comparison"]
+ "Selbstverbesserung", "Gesetz der Anziehung", "Millionär Mindset", "Erfolgs-Motivation", "Produktivität steigern", "Unternehmerische Motivation", "Persönlichkeitsentwicklung", "Unterbewusstsein programmieren",  
+"Fußball Highlights", "Bundesliga Tore", "Fußball-Vergleiche", "Beste Fußballtore 2024", "Messi gegen Ronaldo", "Fußball-Memes", "Champions League Analyse", "WM 2026 Vorhersagen",  
+"KI-Tools 2024", "Beste ChatGPT-Befehle", "KI-Automatisierung", "Technik-Tutorials", "Geld verdienen mit KI", "ChatGPT für Unternehmen", "KI-generierte Inhalte", "KI-Stimmen-Generator",  
+"Passives Einkommen", "Geld verdienen online", "Investieren für Anfänger", "Finanzielle Freiheit", "Börsenstrategien 2024", "Persönliche Finanztipps", "Kryptowährung investieren", "Nebenverdienst",  
+"Geschichts-Fakten", "Zweiter Weltkrieg Geschichte", "Antike Zivilisationen", "Mysteriöse Ereignisse", "Dunkle Geschichte", "Ungelöste Rätsel", "Verschwörungstheorien", "Historische Dokumentationen"
+]
 
 # Fetch Data Button
 if st.button("Fetch Data"):
