@@ -16,8 +16,6 @@ st.title("YouTube Viral Topics Tool")
 days = st.number_input("Enter Days to Search (1-30):", min_value=1, max_value=30, value=5)
 min_subs = st.number_input("Min Subscribers:", min_value=0, value=500)
 max_subs = st.number_input("Max Subscribers:", min_value=1, value=5000)
-min_likes = st.number_input("Min Likes:", min_value=0, value=100)
-min_comments = st.number_input("Min Comments:", min_value=0, value=10)
 min_views = st.number_input("Min Views:", min_value=0, value=1000)
 max_views = st.number_input("Max Views:", min_value=1, value=1000000)
 
@@ -71,25 +69,21 @@ if st.button("Fetch Data"):
                 thumbnail_url = video["snippet"].get("thumbnails", {}).get("medium", {}).get("url", "")
                 channel_name = channel["snippet"].get("title", "N/A")
                 views = int(stat["statistics"].get("viewCount", 0))
-                likes = int(stat["statistics"].get("likeCount", 0))
-                comments = int(stat["statistics"].get("commentCount", 0))
                 subscribers = int(channel["statistics"].get("subscriberCount", 0))
                 
-                if min_subs <= subscribers <= max_subs and min_views <= views <= max_views and likes >= min_likes and comments >= min_comments:
-                    engagement_rate = (views + likes + comments) / max(1, subscribers)
+                if min_subs <= subscribers <= max_subs and min_views <= views <= max_views:
+                    engagement_rate = views / max(1, subscribers)
                     all_results.append({
                         "Title": title,
                         "Channel": channel_name,
                         "URL": video_url,
                         "Views": views,
-                        "Likes": likes,
-                        "Comments": comments,
                         "Subscribers": subscribers,
                         "Engagement Rate": engagement_rate,
                         "Thumbnail": thumbnail_url
                     })
                 else:
-                    st.write(f"Skipping {title} - Views: {views}, Likes: {likes}, Comments: {comments}, Subs: {subscribers}")
+                    st.write(f"Skipping {title} - Views: {views}, Subs: {subscribers}")
         
         if all_results:
             df = pd.DataFrame(all_results).sort_values(by="Engagement Rate", ascending=False)
@@ -98,8 +92,9 @@ if st.button("Fetch Data"):
                 st.image(row["Thumbnail"], caption=row["Title"], use_column_width=True)
                 st.markdown(f"**[{row['Title']}]({row['URL']})**")
                 st.write(f"**Channel:** {row['Channel']}")
-                st.write(f"**Views:** {row['Views']} | **Likes:** {row['Likes']} | **Comments:** {row['Comments']}")
-                st.write(f"**Subscribers:** {row['Subscribers']} | **Engagement Rate:** {row['Engagement Rate']:.2f}")
+                st.write(f"**Views:** {row['Views']}")
+                st.write(f"**Subscribers:** {row['Subscribers']}")
+                st.write(f"**Engagement Rate:** {row['Engagement Rate']:.2f}")
                 st.write("---")
             
             # CSV Download
