@@ -15,9 +15,11 @@ st.title("YouTube Viral Topics Tool")
 # Input Fields
 days = st.number_input("Enter Days to Search (1-30):", min_value=1, max_value=30, value=5)
 min_subs = st.number_input("Min Subscribers:", min_value=0, value=500)
-max_subs = st.number_input("Max Subscribers:", min_value=1, value=1000)
+max_subs = st.number_input("Max Subscribers:", min_value=1, value=5000)
 min_likes = st.number_input("Min Likes:", min_value=0, value=100)
 min_comments = st.number_input("Min Comments:", min_value=0, value=10)
+min_views = st.number_input("Min Views:", min_value=0, value=1000)
+max_views = st.number_input("Max Views:", min_value=1, value=1000000)
 
 # Broader keywords
 keywords = ["Self Improvement", "Tech Reviews", "Stock Market", "Fitness", "AI Tools"]
@@ -67,7 +69,7 @@ if st.button("Fetch Data"):
                 comments = int(stat["statistics"].get("commentCount", 0))
                 subscribers = int(channel["statistics"].get("subscriberCount", 0))
                 
-                if min_subs <= subscribers <= max_subs and likes >= min_likes and comments >= min_comments:
+                if min_subs <= subscribers <= max_subs and min_views <= views <= max_views and likes >= min_likes and comments >= min_comments:
                     engagement_rate = (views + likes + comments) / max(1, subscribers)
                     all_results.append({
                         "Title": title,
