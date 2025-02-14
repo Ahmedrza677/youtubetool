@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import pandas as pd
 from datetime import datetime, timedelta
 
 # YouTube API Key
@@ -13,28 +14,22 @@ st.title("YouTube Viral Topics Tool")
 
 # Input Fields
 days = st.number_input("Enter Days to Search (1-30):", min_value=1, max_value=30, value=5)
+min_subs = st.number_input("Min Subscribers:", min_value=0, value=500)
+max_subs = st.number_input("Max Subscribers:", min_value=1, value=1000)
+min_likes = st.number_input("Min Likes:", min_value=0, value=100)
+min_comments = st.number_input("Min Comments:", min_value=0, value=10)
 
-# List of broader keywords
-keywords = [
- "Selbstverbesserung", "Gesetz der Anziehung", "Millionär Mindset", "Erfolgs-Motivation", "Produktivität steigern", "Unternehmerische Motivation", "Persönlichkeitsentwicklung", "Unterbewusstsein programmieren",  
-"Fußball Highlights", "Bundesliga Tore", "Fußball-Vergleiche", "Beste Fußballtore 2024", "Messi gegen Ronaldo", "Fußball-Memes", "Champions League Analyse", "WM 2026 Vorhersagen",  
-"KI-Tools 2024", "Beste ChatGPT-Befehle", "KI-Automatisierung", "Technik-Tutorials", "Geld verdienen mit KI", "ChatGPT für Unternehmen", "KI-generierte Inhalte", "KI-Stimmen-Generator",  
-"Passives Einkommen", "Geld verdienen online", "Investieren für Anfänger", "Finanzielle Freiheit", "Börsenstrategien 2024", "Persönliche Finanztipps", "Kryptowährung investieren", "Nebenverdienst",  
-"Geschichts-Fakten", "Zweiter Weltkrieg Geschichte", "Antike Zivilisationen", "Mysteriöse Ereignisse", "Dunkle Geschichte", "Ungelöste Rätsel", "Verschwörungstheorien", "Historische Dokumentationen"
-]
+# Broader keywords
+keywords = ["Self Improvement", "Tech Reviews", "Stock Market", "Fitness", "AI Tools"]
 
 # Fetch Data Button
 if st.button("Fetch Data"):
     try:
-        # Calculate date range
         start_date = (datetime.utcnow() - timedelta(days=int(days))).isoformat("T") + "Z"
         all_results = []
-
-        # Iterate over the list of keywords
+        
         for keyword in keywords:
             st.write(f"Searching for keyword: {keyword}")
-
-            # Define search parameters
             search_params = {
                 "part": "snippet",
                 "q": keyword,
@@ -44,77 +39,63 @@ if st.button("Fetch Data"):
                 "maxResults": 5,
                 "key": API_KEY,
             }
-
-            # Fetch video data
+            
             response = requests.get(YOUTUBE_SEARCH_URL, params=search_params)
             data = response.json()
-
-            # Check if "items" key exists
-            if "items" not in data or not data["items"]:
-                st.warning(f"No videos found for keyword: {keyword}")
+            
+            if "items" not in data:
                 continue
 
-            videos = data["items"]
-            video_ids = [video["id"]["videoId"] for video in videos if "id" in video and "videoId" in video["id"]]
-            channel_ids = [video["snippet"]["channelId"] for video in videos if "snippet" in video and "channelId" in video["snippet"]]
-
-            if not video_ids or not channel_ids:
-                st.warning(f"Skipping keyword: {keyword} due to missing video/channel data.")
-                continue
-
-            # Fetch video statistics
+            video_ids = [video["id"]["videoId"] for video in data["items"]]
+            channel_ids = [video["snippet"]["channelId"] for video in data["items"]]
+            
             stats_params = {"part": "statistics", "id": ",".join(video_ids), "key": API_KEY}
             stats_response = requests.get(YOUTUBE_VIDEO_URL, params=stats_params)
             stats_data = stats_response.json()
-
-            if "items" not in stats_data or not stats_data["items"]:
-                st.warning(f"Failed to fetch video statistics for keyword: {keyword}")
-                continue
-
-            # Fetch channel statistics
-            channel_params = {"part": "statistics", "id": ",".join(channel_ids), "key": API_KEY}
+            
+            channel_params = {"part": "statistics,snippet", "id": ",".join(channel_ids), "key": API_KEY}
             channel_response = requests.get(YOUTUBE_CHANNEL_URL, params=channel_params)
             channel_data = channel_response.json()
-
-            if "items" not in channel_data or not channel_data["items"]:
-                st.warning(f"Failed to fetch channel statistics for keyword: {keyword}")
-                continue
-
-            stats = stats_data["items"]
-            channels = channel_data["items"]
-
-            # Collect results
-            for video, stat, channel in zip(videos, stats, channels):
-                title = video["snippet"].get("title", "N/A")
-                description = video["snippet"].get("description", "")[:200]
+            
+            for video, stat, channel in zip(data["items"], stats_data["items"], channel_data["items"]):
+                title = video["snippet"]["title"]
                 video_url = f"https://www.youtube.com/watch?v={video['id']['videoId']}"
+                thumbnail_url = video["snippet"]["thumbnails"]["medium"]["url"]
+                channel_name = channel["snippet"]["title"]
                 views = int(stat["statistics"].get("viewCount", 0))
-                subs = int(channel["statistics"].get("subscriberCount", 0))
-
-                if subs < 2000:  # Only include channels with fewer than 2,000 subscribers
+                likes = int(stat["statistics"].get("likeCount", 0))
+                comments = int(stat["statistics"].get("commentCount", 0))
+                subscribers = int(channel["statistics"].get("subscriberCount", 0))
+                
+                if min_subs <= subscribers <= max_subs and likes >= min_likes and comments >= min_comments:
+                    engagement_rate = (views + likes + comments) / max(1, subscribers)
                     all_results.append({
                         "Title": title,
-                        "Description": description,
+                        "Channel": channel_name,
                         "URL": video_url,
                         "Views": views,
-                        "Subscribers": subs
+                        "Likes": likes,
+                        "Comments": comments,
+                        "Subscribers": subscribers,
+                        "Engagement Rate": engagement_rate,
+                        "Thumbnail": thumbnail_url
                     })
-
-        # Display results
+        
         if all_results:
-            st.success(f"Found {len(all_results)} results across all keywords!")
-            for result in all_results:
-                st.markdown(
-                    f"**Title:** {result['Title']}  \n"
-                    f"**Description:** {result['Description']}  \n"
-                    f"**URL:** [Watch Video]({result['URL']})  \n"
-                    f"**Views:** {result['Views']}  \n"
-                    f"**Subscribers:** {result['Subscribers']}"
-                )
+            df = pd.DataFrame(all_results).sort_values(by="Engagement Rate", ascending=False)
+            st.success(f"Found {len(df)} videos!")
+            for _, row in df.iterrows():
+                st.image(row["Thumbnail"], caption=row["Title"], use_column_width=True)
+                st.markdown(f"**[{row['Title']}]({row['URL']})**")
+                st.write(f"**Channel:** {row['Channel']}")
+                st.write(f"**Views:** {row['Views']} | **Likes:** {row['Likes']} | **Comments:** {row['Comments']}")
+                st.write(f"**Subscribers:** {row['Subscribers']} | **Engagement Rate:** {row['Engagement Rate']:.2f}")
                 st.write("---")
+            
+            # CSV Download
+            csv = df.to_csv(index=False).encode("utf-8")
+            st.download_button("Download CSV", csv, "youtube_results.csv", "text/csv")
         else:
-            st.warning("No results found for channels with fewer than 3,000 subscribers.")
-
+            st.warning("No results match the filters!")
     except Exception as e:
-        st.error(f"An error occurred: {e}")
-
+        st.error(f"Error: {e}")
